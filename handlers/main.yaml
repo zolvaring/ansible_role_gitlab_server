@@ -1,0 +1,10 @@
+---
+# file: .../ansible/roles/gitlab_server/handlers/main.yaml
+
+
+- name: Reload firewalld
+  service:
+    name: firewalld
+    state: reloaded
+  become: true
+  listen: reload firewalld

@@ -1,0 +1,54 @@
+---
+# file: .../ansible/roles/gitlab_server/tasks/main.yaml
+
+
+- name: Download gitlab repository shell script
+  get_url:
+    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
+    dest: /root/gitlab.rpm.sh
+  become: true
+
+
+- name: Execute gitlab repository shell script
+  command: bash /root/gitlab.rpm.sh
+  become: true
+
+
+- name: Install necessary packages
+  package:
+    name:
+      - curl
+      - policycoreutils-python
+      - openssh-server
+      - postfix
+  become: true
+
+
+- name: Start and enable postfix service
+  service:
+    name: postfix
+    state: started
+    enabled: yes
+  become: true
+
+
+- name: Install the gitlab Community Edition package
+  package:
+    name: gitlab-ce
+  become: true
+  environment:
+    EXTERNAL_URL: "{{ __gitlab_external_url | default( 'http://' + ansible_fqdn ) }}"
+
+
+- name: Enable required firewall services
+  firewalld:
+    service: "{{ service }}"
+    state: enabled
+    permanent: true
+  become: true
+  notify: reload firewalld
+  loop:
+    - http
+    - https
+  loop_control:
+    loop_var: service
